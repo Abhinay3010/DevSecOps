@@ -1,0 +1,37 @@
+name: User Service CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Sonar Scan
+        uses: sonarsource/sonarcloud-github-action@v1
+        with:
+          projectKey: user-service
+          organization: your-org
+          token: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Build Backend
+        run: mvn clean package
+
+      - name: Docker Build
+        run: docker build -t demo/user-service:latest .
+
+      - name: Generate SBOM
+        run: syft packages . -o json > sbom.json
+
+      - name: Trivy Scan
+        run: trivy fs .
+
+      - name: Dummy Push Stage
+        run: echo "Image successfully pushed to Artifactory"
