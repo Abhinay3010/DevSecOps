@@ -1,0 +1,9 @@
+image:
+  repository: devsecops/frontend
+  tag: "1.0.0"
+
+service:
+  port: 80
+
+env:
+  APP_NAME: frontend
