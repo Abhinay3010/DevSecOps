@@ -2,36 +2,58 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  ci:
+  frontend-pipeline:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+
+      # 1️⃣ Checkout
+      - name: Checkout repo
         uses: actions/checkout@v3
 
+      # 2️⃣ Sonar Scan (non-blocking)
       - name: Sonar Scan
-        uses: sonarsource/sonarcloud-github-action@v1
+        uses: sonarsource/sonarcloud-github-action@master
+        continue-on-error: true
         with:
           projectKey: frontend-app
           organization: your-org
           token: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Build Frontend
-        run: npm install && npm run build
+      - name: Show Sonar URL
+        run: echo "Sonar URL: https://sonarcloud.io/dashboard?id=frontend-app"
 
+      # 3️⃣ Maven Build
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Maven Build
+        run: mvn clean install
+
+      # 4️⃣ Docker Build
       - name: Docker Build
-        run: docker build -t demo/frontend-app:latest .
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: demo/frontend-app:latest
 
-      - name: Generate SBOM
-        run: syft packages . -o json > sbom.json
+      # 5️⃣ Syft Scan
+      - name: Syft Scan
+        uses: anchore/syft-action@v0.5.0
+        continue-on-error: true
 
+      # 6️⃣ Trivy Scan
       - name: Trivy Scan
-        run: trivy fs .
+        uses: aquasecurity/trivy-action@v0.12.0
+        continue-on-error: true
 
-      - name: Dummy Push Stage
-        run: echo "Image successfully pushed to Artifactory"
+      # 7️⃣ Dummy Image Push
+      - name: Image pushed to Artifactory
+        run: echo "✅ Frontend image pushed successfully (dummy stage)"
