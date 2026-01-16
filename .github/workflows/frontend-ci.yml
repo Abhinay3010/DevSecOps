@@ -16,12 +16,15 @@ jobs:
 
       # 2️⃣ Sonar Scan (non-blocking)
       - name: Sonar Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: sonarsource/sonarcloud-github-action@v2.3.1
         continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          projectKey: frontend-app
-          organization: your-org
-          token: ${{ secrets.SONAR_TOKEN }}
+          args: >
+            -Dsonar.projectKey=frontend-app
+            -Dsonar.organization=your-org
+            -Dsonar.host.url=https://sonarcloud.io
 
       - name: Show Sonar URL
         run: echo "Sonar URL: https://sonarcloud.io/dashboard?id=frontend-app"
